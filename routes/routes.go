@@ -34,4 +34,15 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		transactionRoutes.POST("/add", transactionHandler.AddTransactionHandler)
 	}
+
+	pointsRepo := repository.NewLoyaltyPointsRepository(db)
+	pointsUsecase := usecase.NewLoyaltyPointsUsecase(pointsRepo)
+	pointsHandler := handlers.NewLoyaltyPointsHandler(pointsUsecase)
+
+	pointsRoutes := r.Group("/points")
+	pointsRoutes.Use(middleware.AuthMiddleware()) 
+	{
+		pointsRoutes.GET("/balance", pointsHandler.GetPointsBalanceHandler)
+		pointsRoutes.GET("/history", pointsHandler.GetPointsHistoryHandler)
+	}
 }
