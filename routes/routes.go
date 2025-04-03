@@ -44,5 +44,6 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		pointsRoutes.GET("/balance", pointsHandler.GetPointsBalanceHandler)
 		pointsRoutes.GET("/history", pointsHandler.GetPointsHistoryHandler)
+		pointsRoutes.POST("/redeem", pointsHandler.RedeemPointsHandler)
 	}
 }

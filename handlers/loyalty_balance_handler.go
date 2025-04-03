@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/Prototype-1/loyalty-points-system/usecases"
 )
@@ -45,4 +44,29 @@ func (h *LoyaltyPointsHandler) GetPointsHistoryHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"user_id": userID, "history": history})
+}
+
+func (h *LoyaltyPointsHandler) RedeemPointsHandler(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var req struct {
+		Points int `json:"points" binding:"required,min=1"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	err := h.pointsUsecase.RedeemUserPoints(userID.(int), req.Points)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Points redeemed successfully", "redeemed_points": req.Points})
 }
