@@ -26,7 +26,6 @@ func ConnectDatabase(cfg *config.Config) {
 		&models.User{},
 		&models.Transaction{},
 		&models.Session{},
-		&models.PointsHistory{},
 		&models.LoyaltyPoints{},
 	)
 	if err != nil {
