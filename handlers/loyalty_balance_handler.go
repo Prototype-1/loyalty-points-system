@@ -38,8 +38,8 @@ func (h *LoyaltyPointsHandler) GetPointsHistoryHandler(c *gin.Context) {
 	}
 
 	startDate := c.Query("start_date") // YYYY-MM-DD
-	endDate := c.Query("end_date")     // YYY-MM-DD
-	pointType := c.Query("type")       // the status of point
+	endDate := c.Query("end_date") // YYY-MM-DD
+	pointType := c.Query("type") // the status of point
 
 	history, err := h.pointsUsecase.GetUserPointsHistory(userID.(int), startDate, endDate, pointType)
 	if err != nil {
