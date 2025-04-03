@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"log"
+
 	"github.com/Prototype-1/loyalty-points-system/config"
 	"github.com/Prototype-1/loyalty-points-system/models"
 	"gorm.io/driver/postgres"
@@ -35,3 +36,6 @@ func ConnectDatabase(cfg *config.Config) {
 	log.Println("Database migrated successfully!")
 }
 
+func GetDB() *gorm.DB {
+	return DB
+}

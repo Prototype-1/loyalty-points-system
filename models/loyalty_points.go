@@ -3,9 +3,9 @@ package models
 import "time"
 
 type LoyaltyPoints struct {
-	ID        int       `json:"id"`
-	UserID    int       `json:"user_id"`
-	Points    int       `json:"points"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        int       `gorm:"primaryKey" json:"id"`
+	UserID    int       `gorm:"index;not null" json:"user_id"`
+	Points    int       `gorm:"not null" json:"points"`
+	Status    string    `gorm:"type:varchar(20);not null" json:"status"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
