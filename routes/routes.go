@@ -6,6 +6,7 @@ import (
 	"github.com/Prototype-1/loyalty-points-system/repositories"
 	"github.com/Prototype-1/loyalty-points-system/usecases"
 	"github.com/Prototype-1/loyalty-points-system/database"
+	"github.com/Prototype-1/loyalty-points-system/middleware"
 )
 
 func SetupRoutes(r *gin.Engine) {
@@ -21,5 +22,16 @@ func SetupRoutes(r *gin.Engine) {
 		authRoutes.POST("/signup", userHandler.SignupHandler)
 		authRoutes.POST("/login", userHandler.LoginHandler)
 		authRoutes.POST("/logout", userHandler.LogoutHandler)
+	}
+
+	transactionRepo := repository.NewTransactionRepository(db)
+	loyaltyRepo := repository.NewLoyaltyRepository(db)
+	transactionUsecase := usecase.NewTransactionUsecase(transactionRepo, loyaltyRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionUsecase)
+
+	transactionRoutes := r.Group("/transactions")
+	transactionRoutes.Use(middleware.AuthMiddleware()) 
+	{
+		transactionRoutes.POST("/add", transactionHandler.AddTransactionHandler)
 	}
 }
