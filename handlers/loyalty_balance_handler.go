@@ -31,13 +31,17 @@ func (h *LoyaltyPointsHandler) GetPointsBalanceHandler(c *gin.Context) {
 }
 
 func (h *LoyaltyPointsHandler) GetPointsHistoryHandler(c *gin.Context) {
-	userID, exists := c.Get("userID") 
+	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	history, err := h.pointsUsecase.GetUserPointsHistory(userID.(int))
+	startDate := c.Query("start_date") // YYYY-MM-DD
+	endDate := c.Query("end_date")     // YYY-MM-DD
+	pointType := c.Query("type")       // the status of point
+
+	history, err := h.pointsUsecase.GetUserPointsHistory(userID.(int), startDate, endDate, pointType)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch points history"})
 		return

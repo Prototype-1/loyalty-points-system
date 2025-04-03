@@ -7,7 +7,7 @@ import (
 
 type LoyaltyPointsUsecase interface {
 	GetUserPointsBalance(userID int) (int, error)
-	GetUserPointsHistory(userID int) ([]models.LoyaltyPoints, error)
+	GetUserPointsHistory(userID int, startDate, endDate, pointType string) ([]models.LoyaltyPoints, error) 
 	RedeemUserPoints(userID int, points int) error 
 }
 
@@ -23,8 +23,8 @@ func (u *loyaltyPointsUsecaseImpl) GetUserPointsBalance(userID int) (int, error)
 	return u.pointsRepo.GetPointsBalance(userID)
 }
 
-func (u *loyaltyPointsUsecaseImpl) GetUserPointsHistory(userID int) ([]models.LoyaltyPoints, error) {
-	return u.pointsRepo.GetPointsHistory(userID)
+func (u *loyaltyPointsUsecaseImpl) GetUserPointsHistory(userID int, startDate, endDate, pointType string) ([]models.LoyaltyPoints, error) {
+	return u.pointsRepo.GetPointsHistory(userID, startDate, endDate, pointType)
 }
 
 func (u *loyaltyPointsUsecaseImpl) RedeemUserPoints(userID int, points int) error {

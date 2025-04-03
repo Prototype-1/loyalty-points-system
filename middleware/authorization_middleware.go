@@ -3,16 +3,16 @@ package middleware
 import (
 	"net/http"
 	"strings"
-
+	"os"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"os"
+	"github.com/Prototype-1/loyalty-points-system/database"
+	"github.com/Prototype-1/loyalty-points-system/models"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token required"})
 			c.Abort()
@@ -40,8 +40,16 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		userID := int(claims["user_id"].(float64))
-		c.Set("userID", userID)
 
+		db := database.GetDB()
+		var session models.Session
+		if err := db.Where("user_id = ? AND token = ?", userID, tokenString).First(&session).Error; err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Session expired. Please log in again."})
+			c.Abort()
+			return
+		}
+
+		c.Set("userID", userID)
 		c.Next()
 	}
 }
