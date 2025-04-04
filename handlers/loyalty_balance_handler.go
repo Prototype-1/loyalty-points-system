@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"github.com/gin-gonic/gin"
 	"github.com/Prototype-1/loyalty-points-system/usecases"
 )
@@ -30,6 +31,26 @@ func (h *LoyaltyPointsHandler) GetPointsBalanceHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user_id": userID, "points_balance": points})
 }
 
+// func (h *LoyaltyPointsHandler) GetPointsHistoryHandler(c *gin.Context) {
+// 	userID, exists := c.Get("userID")
+// 	if !exists {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+// 		return
+// 	}
+
+// 	startDate := c.Query("start_date") // YYYY-MM-DD
+// 	endDate := c.Query("end_date") // YYY-MM-DD
+// 	pointType := c.Query("type") // the status of point
+
+// 	history, err := h.pointsUsecase.GetUserPointsHistory(userID.(int), startDate, endDate, pointType)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch points history"})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{"user_id": userID, "history": history})
+// }
+
 func (h *LoyaltyPointsHandler) GetPointsHistoryHandler(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -37,17 +58,27 @@ func (h *LoyaltyPointsHandler) GetPointsHistoryHandler(c *gin.Context) {
 		return
 	}
 
-	startDate := c.Query("start_date") // YYYY-MM-DD
-	endDate := c.Query("end_date") // YYY-MM-DD
-	pointType := c.Query("type") // the status of point
+	startDate := c.Query("start_date") 
+	endDate := c.Query("end_date")
+	pointType := c.Query("type")
 
-	history, err := h.pointsUsecase.GetUserPointsHistory(userID.(int), startDate, endDate, pointType)
+	// Extract pagination params
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	history, total, err := h.pointsUsecase.GetUserPointsHistory(userID.(int), startDate, endDate, pointType, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch points history"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user_id": userID, "history": history})
+	c.JSON(http.StatusOK, gin.H{
+		"user_id":       userID,
+		"history":       history,
+		"total_records": total,
+		"page":          page,
+		"limit":         limit,
+	})
 }
 
 func (h *LoyaltyPointsHandler) RedeemPointsHandler(c *gin.Context) {

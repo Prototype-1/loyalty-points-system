@@ -9,7 +9,8 @@ import (
 
 type LoyaltyPointsRepository interface {
 	GetPointsBalance(userID int) (int, error)
-	GetPointsHistory(userID int, startDate, endDate, pointType string) ([]models.LoyaltyPoints, error) 
+	// GetPointsHistory(userID int, startDate, endDate, pointType string) ([]models.LoyaltyPoints, error) 
+	GetPointsHistory(userID int, startDate, endDate, status string, page, limit int) ([]models.LoyaltyPoints, int64, error) 
 	RedeemPoints(userID int, points int) error
 }
 
@@ -30,28 +31,58 @@ func (r *loyaltyPointsRepositoryImpl) GetPointsBalance(userID int) (int, error) 
 	return totalPoints, err
 }
 
-func (r *loyaltyPointsRepositoryImpl) GetPointsHistory(userID int, startDate, endDate, status string) ([]models.LoyaltyPoints, error) {
-    var history []models.LoyaltyPoints
-    query := r.db.Where("user_id = ?", userID)
+// func (r *loyaltyPointsRepositoryImpl) GetPointsHistory(userID int, startDate, endDate, status string) ([]models.LoyaltyPoints, error) {
+//     var history []models.LoyaltyPoints
+//     query := r.db.Where("user_id = ?", userID)
 
-    if startDate != "" && endDate != "" {
-        layout := "2006-01-02 15:04:05"
-        formattedStart := startDate + " 00:00:00"
-        formattedEnd := endDate + " 23:59:59"
+//     if startDate != "" && endDate != "" {
+//         layout := "2006-01-02 15:04:05"
+//         formattedStart := startDate + " 00:00:00"
+//         formattedEnd := endDate + " 23:59:59"
 
-        loc, _ := time.LoadLocation("Asia/Kolkata") 
-        startTime, _ := time.ParseInLocation(layout, formattedStart, loc)
-        endTime, _ := time.ParseInLocation(layout, formattedEnd, loc)
+//         loc, _ := time.LoadLocation("Asia/Kolkata") 
+//         startTime, _ := time.ParseInLocation(layout, formattedStart, loc)
+//         endTime, _ := time.ParseInLocation(layout, formattedEnd, loc)
 
-        query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
-    }
+//         query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+//     }
 
-    if status != "" {
-        query = query.Where("status = ?", status)
-    }
+//     if status != "" {
+//         query = query.Where("status = ?", status)
+//     }
 
-    err := query.Find(&history).Error
-    return history, err
+//     err := query.Find(&history).Error
+//     return history, err
+// }
+
+func (r *loyaltyPointsRepositoryImpl) GetPointsHistory(userID int, startDate, endDate, status string, page, limit int) ([]models.LoyaltyPoints, int64, error) {
+	var history []models.LoyaltyPoints
+	var totalRecords int64
+
+	query := r.db.Where("user_id = ?", userID)
+
+	if startDate != "" && endDate != "" {
+		layout := "2006-01-02 15:04:05"
+		formattedStart := startDate + " 00:00:00"
+		formattedEnd := endDate + " 23:59:59"
+
+		loc, _ := time.LoadLocation("Asia/Kolkata")
+		startTime, _ := time.ParseInLocation(layout, formattedStart, loc)
+		endTime, _ := time.ParseInLocation(layout, formattedEnd, loc)
+
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
+
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	query.Model(&models.LoyaltyPoints{}).Count(&totalRecords)
+
+	offset := (page - 1) * limit
+	err := query.Offset(offset).Limit(limit).Find(&history).Error
+
+	return history, totalRecords, err
 }
 
 func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error {
