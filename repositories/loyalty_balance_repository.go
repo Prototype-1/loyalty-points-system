@@ -89,7 +89,7 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 	var totalPoints int
 
 	err := r.db.Model(&models.LoyaltyPoints{}).
-		Where("user_id = ?", userID).
+		Where("user_id = ? AND status = ?", userID, "earned").
 		Select("SUM(points)").
 		Scan(&totalPoints).Error
 
