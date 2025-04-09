@@ -7,9 +7,8 @@ import (
 
 type LoyaltyPointsUsecase interface {
 	GetUserPointsBalance(userID int) (int, error)
-	//GetUserPointsHistory(userID int, startDate, endDate, pointType string) ([]models.LoyaltyPoints, error) 
 	GetUserPointsHistory(userID int, startDate, endDate, pointType string, page, limit int) ([]models.LoyaltyPoints, int64, error) 
-	RedeemUserPoints(userID int, points int) error 
+	RedeemUserPoints(userID int, points int) (int, error)
 }
 
 type loyaltyPointsUsecaseImpl struct {
@@ -24,15 +23,21 @@ func (u *loyaltyPointsUsecaseImpl) GetUserPointsBalance(userID int) (int, error)
 	return u.pointsRepo.GetPointsBalance(userID)
 }
 
-// func (u *loyaltyPointsUsecaseImpl) GetUserPointsHistory(userID int, startDate, endDate, pointType string) ([]models.LoyaltyPoints, error) {
-// 	return u.pointsRepo.GetPointsHistory(userID, startDate, endDate, pointType)
-// }
-
 func (u *loyaltyPointsUsecaseImpl) GetUserPointsHistory(userID int, startDate, endDate, pointType string, page, limit int) ([]models.LoyaltyPoints, int64, error) {
 	return u.pointsRepo.GetPointsHistory(userID, startDate, endDate, pointType, page, limit)
 }
 
+func (u *loyaltyPointsUsecaseImpl) RedeemUserPoints(userID int, points int) (int, error) {
+	err := u.pointsRepo.RedeemPoints(userID, points)
+	if err != nil {
+		return 0, err
+	}
 
-func (u *loyaltyPointsUsecaseImpl) RedeemUserPoints(userID int, points int) error {
-	return u.pointsRepo.RedeemPoints(userID, points)
+	balance, err := u.pointsRepo.GetPointsBalance(userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return balance, nil
 }
+
