@@ -22,14 +22,24 @@ func NewLoyaltyPointsRepository(db *gorm.DB) LoyaltyPointsRepository {
 }
 
 func (r *loyaltyPointsRepositoryImpl) GetPointsBalance(userID int) (int, error) {
-	var total int
+	var earned int
+	var redeemed int
 
 	err := r.db.Model(&models.LoyaltyPoints{}).
-		Where("user_id = ? AND status IN ?", userID, []string{"earned", "redeemed"}).
-		Select("COALESCE(SUM(points), 0)").
-		Scan(&total).Error
+		Where("user_id = ? AND status = ?", userID, "earned").
+		Select("COALESCE(SUM(points), 0)").Scan(&earned).Error
+	if err != nil {
+		return 0, err
+	}
 
-	return total, err
+	err = r.db.Model(&models.LoyaltyPoints{}).
+		Where("user_id = ? AND status = ?", userID, "redeemed").
+		Select("COALESCE(SUM(points), 0)").Scan(&redeemed).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return earned + redeemed, nil
 }
 
 func (r *loyaltyPointsRepositoryImpl) GetPointsHistory(userID int, startDate, endDate, status string, page, limit int) ([]models.LoyaltyPoints, int64, error) {
