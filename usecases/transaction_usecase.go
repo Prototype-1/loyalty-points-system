@@ -45,6 +45,7 @@ func (u *transactionUsecaseImpl) AddTransaction(tx *models.Transaction) error {
 		UserID: tx.UserID,
 		Points: pointsEarned,
 		Status: "earned",
+		Reason: "Earned via transaction in " + tx.Category,
 	}
 
 	return u.loyaltyRepo.AddLoyaltyPoints(loyaltyPoints)

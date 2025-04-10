@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 	"errors"
 	"time"
+	"gorm.io/gorm/clause"
 )
 
 type LoyaltyPointsRepository interface {
@@ -67,8 +68,7 @@ func (r *loyaltyPointsRepositoryImpl) GetPointsHistory(userID int, startDate, en
 	query.Model(&models.LoyaltyPoints{}).Count(&totalRecords)
 
 	offset := (page - 1) * limit
-	err := query.Offset(offset).Limit(limit).Find(&history).Error
-
+	err := query.Order("created_at DESC").Offset(offset).Limit(limit).Find(&history).Error
 	return history, totalRecords, err
 }
 
@@ -78,12 +78,14 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 
 		err := tx.Model(&models.LoyaltyPoints{}).
 			Where("user_id = ? AND status = ?", userID, "earned").
-			Select("SUM(points)").
+			Select("COALESCE(SUM(points), 0)").
+			Clauses(clause.Locking{Strength: "UPDATE"}).
 			Scan(&totalPoints).Error
 
 		if err != nil {
 			return err
 		}
+
 		if totalPoints < points {
 			return errors.New("insufficient points")
 		}
@@ -92,6 +94,7 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 			UserID: userID,
 			Points: -points,
 			Status: "redeemed",
+			Reason: "User redeemed points",
 		}
 
 		if err := tx.Create(&newRedemption).Error; err != nil {
