@@ -28,7 +28,7 @@ This project was originally built as part of a machine test (48-hour limit). The
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 - **Language**: Go
 - **Database**: PostgreSQL
 - **ORM**: GORM
@@ -36,7 +36,7 @@ This project was originally built as part of a machine test (48-hour limit). The
 
 ---
 
-## 🔍 API Overview
+##  API Overview
 | Endpoint               | Description                             |
 |------------------------|-----------------------------------------|
 | `POST /auth/login`     | User login + JWT                        |
