@@ -74,29 +74,28 @@ func (r *loyaltyPointsRepositoryImpl) GetPointsHistory(userID int, startDate, en
 
 func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		var totalPoints int
-
-		err := tx.Model(&models.LoyaltyPoints{}).
+		// 1. Fetch and lock all earned points rows
+		var earnedPoints []models.LoyaltyPoints
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("user_id = ? AND status = ?", userID, "earned").
-			Select("COALESCE(SUM(points), 0)").
-			Clauses(clause.Locking{Strength: "UPDATE"}).
-			Scan(&totalPoints).Error
-
+			Find(&earnedPoints).Error
 		if err != nil {
 			return err
 		}
 
+		totalPoints := 0
+		for _, p := range earnedPoints {
+			totalPoints += p.Points
+		}
 		if totalPoints < points {
 			return errors.New("insufficient points")
 		}
-
 		newRedemption := models.LoyaltyPoints{
 			UserID: userID,
 			Points: -points,
 			Status: "redeemed",
 			Reason: "User redeemed points",
 		}
-
 		if err := tx.Create(&newRedemption).Error; err != nil {
 			return err
 		}
@@ -104,4 +103,5 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 		return nil
 	})
 }
+
 

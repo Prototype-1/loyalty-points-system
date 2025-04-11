@@ -15,7 +15,7 @@ func SetupRoutes(r *gin.Engine) {
 	userRepo := repository.NewUserRepository(db)
 	sessionRepo := repository.NewSessionRepository(db)
 	userUsecase := usecase.NewUserUsecase(userRepo, sessionRepo)
-	userHandler := handlers.NewUserHandler(userUsecase)
+	userHandler := handlers.NewUserHandler(userUsecase, db)
 
 	authRoutes := r.Group("/auth")
 	{
@@ -27,7 +27,7 @@ func SetupRoutes(r *gin.Engine) {
 	transactionRepo := repository.NewTransactionRepository(db)
 	loyaltyRepo := repository.NewLoyaltyRepository(db)
 	transactionUsecase := usecase.NewTransactionUsecase(transactionRepo, loyaltyRepo)
-	transactionHandler := handlers.NewTransactionHandler(transactionUsecase)
+	transactionHandler := handlers.NewTransactionHandler(transactionUsecase, db)
 
 	transactionRoutes := r.Group("/transactions")
 	transactionRoutes.Use(middleware.AuthMiddleware()) 
@@ -37,7 +37,7 @@ func SetupRoutes(r *gin.Engine) {
 
 	pointsRepo := repository.NewLoyaltyPointsRepository(db)
 	pointsUsecase := usecase.NewLoyaltyPointsUsecase(pointsRepo)
-	pointsHandler := handlers.NewLoyaltyPointsHandler(pointsUsecase)
+	pointsHandler := handlers.NewLoyaltyPointsHandler(pointsUsecase, db)
 
 	pointsRoutes := r.Group("/points")
 	pointsRoutes.Use(middleware.AuthMiddleware()) 

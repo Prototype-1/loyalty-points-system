@@ -1,19 +1,21 @@
 package handlers
 
 import (
-"github.com/Prototype-1/loyalty-points-system/usecases"
-"github.com/Prototype-1/loyalty-points-system/utils"
-"net/http"
-"github.com/gin-gonic/gin"
-"strings"
+	"net/http"
+	"strings"
+	"github.com/Prototype-1/loyalty-points-system/usecases"
+	"github.com/Prototype-1/loyalty-points-system/utils"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type UserHandler struct {
 	userUsecase usecase.UserUsecase
+	db *gorm.DB
 }
 
-func NewUserHandler(userUsecase usecase.UserUsecase) *UserHandler {
-	return &UserHandler{userUsecase}
+func NewUserHandler(userUsecase usecase.UserUsecase, db *gorm.DB) *UserHandler {
+	return &UserHandler{userUsecase, db}
 }
 
 func (h *UserHandler) SignupHandler(c *gin.Context) {
@@ -34,6 +36,11 @@ func (h *UserHandler) SignupHandler(c *gin.Context) {
 		return
 	}
 
+	utils.LogAudit(h.db, 0, "signup", map[string]interface{}{
+		"username": request.Username,
+		"email":    request.Email,
+	})
+
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
 }
 
@@ -53,6 +60,12 @@ func (h *UserHandler) LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
+
+	userIDInt, _ := utils.ExtractUserIDFromToken(tokens.AccessToken)
+	userID := uint(userIDInt)
+	utils.LogAudit(h.db, userID, "login", map[string]interface{}{
+		"email": request.Email,
+	})
 
 	c.JSON(http.StatusOK, gin.H{
 		"access_token":  tokens.AccessToken,
@@ -76,11 +89,17 @@ func (h *UserHandler) LogoutHandler(c *gin.Context) {
 		return
 	}
 
+	uid := uint(userID)
+
 	err = h.userUsecase.Logout(token, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	utils.LogAudit(h.db, uid, "logout", map[string]interface{}{
+		"message": "User logged out",
+	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }

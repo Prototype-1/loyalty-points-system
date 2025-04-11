@@ -27,6 +27,7 @@ func ConnectDatabase(cfg *config.Config) {
 		&models.Transaction{},
 		&models.Session{},
 		&models.LoyaltyPoints{},
+		&models.AuditLog{},
 	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)

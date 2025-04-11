@@ -21,10 +21,10 @@ This project was originally built as part of a machine test (48-hour limit). The
 > After submitting the initial version, I revisited the code to fix missing requirements and logic gaps:
 
 - Added **transactional safety** using DB transactions for earning and redeeming
-- Corrected point balance logic to exclude **both** redeemed and expired points
+- Corrected point balance logic to exclude expired points
 - Added `reason` field to transaction records for **traceability** (earned/redeemed for what)
 - Improved redemption response to return **updated balance**
-- Ensured clean separation of logic for maintainability
+- Added **Audit logging**  include some form of structured logging for key actions
 
 ---
 
