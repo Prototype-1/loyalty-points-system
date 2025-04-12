@@ -24,9 +24,10 @@ func NewTransactionUsecase(tr repository.TransactionRepository, lr repository.Lo
 }
 
 func (u *transactionUsecaseImpl) AddTransaction(tx *models.Transaction) error {
-	categoryMultipliers := map[string]int{
-		"electronics": 1,
-		"groceries":   2,
+	categoryMultipliers := map[string]float64{
+		"electronics": 0.1,
+		"groceries":   0.2,
+		"fashion":   0.2,
 	}
 
 	multiplier, exists := categoryMultipliers[tx.Category]
@@ -34,7 +35,7 @@ func (u *transactionUsecaseImpl) AddTransaction(tx *models.Transaction) error {
 		return errors.New("invalid category")
 	}
 
-	pointsEarned := int(tx.Amount) * multiplier
+	pointsEarned := int(float64(tx.Amount) * multiplier)
 
 	err := u.transactionRepo.CreateTransaction(tx)
 	if err != nil {
