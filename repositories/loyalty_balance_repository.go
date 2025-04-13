@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 	"gorm.io/gorm/clause"
+	"fmt"
 )
 
 type LoyaltyPointsRepository interface {
@@ -77,6 +78,7 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 		var earnedPoints []models.LoyaltyPoints
 		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("user_id = ? AND status = ?", userID, "earned").
+			Order("created_at ASC").Find(&earnedPoints).
 			Find(&earnedPoints).Error
 		if err != nil {
 			return err
@@ -90,7 +92,6 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 			return errors.New("insufficient points")
 		}
 
-
 		remaining := points
 
 		for _, row := range earnedPoints {
@@ -98,20 +99,24 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 			break
 			}
 
-			toRedeem := min(row.Points, remaining)
-			remaining -= toRedeem
+		var toRedeem int
+		if row.Points <= remaining {
+			toRedeem = row.Points
+		} else  {
+			toRedeem = remaining
 		}
 
 		newRedemption := models.LoyaltyPoints{
 			UserID: userID,
-			Points: -points,
+			Points: -toRedeem,
 			Status: "redeemed",
-			Reason: "User redeemed points",
+			Reason: fmt.Sprintf("Redeemed from earned ID %d", row.ID),
 		}
 		if err := tx.Create(&newRedemption).Error; err != nil {
 			return err
 		}
-
+		remaining -= toRedeem
+	}
 		return nil
 	})
 }
