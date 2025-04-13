@@ -74,7 +74,6 @@ func (r *loyaltyPointsRepositoryImpl) GetPointsHistory(userID int, startDate, en
 
 func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		// 1. Fetch and lock all earned points rows
 		var earnedPoints []models.LoyaltyPoints
 		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("user_id = ? AND status = ?", userID, "earned").
@@ -90,6 +89,19 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 		if totalPoints < points {
 			return errors.New("insufficient points")
 		}
+
+
+		remaining := points
+
+		for _, row := range earnedPoints {
+			if remaining == 0 {
+			break
+			}
+
+			toRedeem := min(row.Points, remaining)
+			remaining -= toRedeem
+		}
+
 		newRedemption := models.LoyaltyPoints{
 			UserID: userID,
 			Points: -points,
@@ -104,4 +116,10 @@ func (r *loyaltyPointsRepositoryImpl) RedeemPoints(userID int, points int) error
 	})
 }
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
 
