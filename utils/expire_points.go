@@ -8,7 +8,6 @@ import (
 	"github.com/Prototype-1/loyalty-points-system/models"
 )
 
-//Is to make it expire points older than 1 year
 func ExpireOldPoints(db *gorm.DB) {
 	oneYearAgo := time.Now().AddDate(-1, 0, 0)
 
@@ -19,21 +18,15 @@ func ExpireOldPoints(db *gorm.DB) {
 	}
 
 	for _, points := range expiredPoints {
-		if err := db.Model(&models.LoyaltyPoints{}).
-			Where("user_id = ?", points.UserID).
-			Update("points_balance", gorm.Expr("points_balance - ?", points.Points)).Error; err != nil {
-			log.Println("Error updating user balance:", err)
-			continue
-		}
-
-		// Mark points as expired
 		points.Status = "expired"
-		points.CreatedAt = time.Now()
+		points.Reason = "Expired after 1 year"
+		points.CreatedAt = time.Now() 
+
 		if err := db.Save(&points).Error; err != nil {
 			log.Println("Error updating points status:", err)
+		} else {
+			log.Printf("Expired %d points for user %d\n", points.Points, points.UserID)
 		}
-
-		log.Printf("Expired %d points for user %d\n", points.Points, points.UserID)
 	}
 }
 
